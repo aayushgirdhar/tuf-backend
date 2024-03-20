@@ -16,6 +16,11 @@ Install dependencies:
 cd tuf-backend
 npm install
 ```
+Start the server
+
+```bash
+npm run dev
+```
 
 ## API Reference
 
