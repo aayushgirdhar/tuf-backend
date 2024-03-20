@@ -6,16 +6,12 @@ const app = express();
 
 const snippetRouter = require("./routes/snippet");
 
-app.use(
-  cors({
-    origin: "https://tuf-assignment-aayushgirdhar.vercel.app",
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 app.use((req, res, next) => {
-console.log(req.method, req.path);
-next();
+  console.log(req.method, req.path);
+  next();
 });
 
 app.get("/", (req, res) => {
