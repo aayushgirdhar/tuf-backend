@@ -1,6 +1,7 @@
 const Snippet = require("../models/snippet");
 const client = require("../redis/client");
 const axios = require("axios");
+const base64 = require("base-64");
 
 const updateCache = async (newSnippet) => {
   const cachedData = await client.get("snippets");
@@ -50,7 +51,7 @@ const codeRunner = async (base64Code, base64Stdin, language) => {
   };
 
   const res = await axios.request(getOptions);
-  return atob(res.data.stdout);
+  return base64.decode(res.data.stdout);
 };
 
 const createSnippet = async (req, res) => {
@@ -66,8 +67,8 @@ const createSnippet = async (req, res) => {
       code,
     });
 
-    const base64Code = btoa(code);
-    const base64Stdin = btoa(stdin);
+    const base64Code = base64.encode(code);
+    const base64Stdin = base64.encode(stdin);
 
     const stdout = await codeRunner(base64Code, base64Stdin, language_id);
 
