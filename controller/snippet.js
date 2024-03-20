@@ -1,7 +1,5 @@
 const Snippet = require("../models/snippet");
 const client = require("../redis/client");
-const axios = require("axios");
-const base64 = require("base-64");
 
 const updateCache = async (newSnippet) => {
   const cachedData = await client.get("snippets");
@@ -13,51 +11,9 @@ const updateCache = async (newSnippet) => {
   }
 };
 
-const codeRunner = async (base64Code, base64Stdin, language) => {
-  const postOptions = {
-    method: "POST",
-    url: process.env.JUDGE0_API_URL + "submissions",
-    params: {
-      base64_encoded: "true",
-      fields: "*",
-    },
-    headers: {
-      "content-type": "application/json",
-      "X-RapidAPI-Key": process.env.RAPID_API_KEY,
-      "X-RapidAPI-Host": process.env.RAPID_API_HOST,
-    },
-    data: {
-      language_id: language,
-      source_code: base64Code,
-      stdin: base64Stdin,
-    },
-  };
-
-  const response = await axios.request(postOptions);
-
-  const submissionId = response.data.token;
-
-  const getOptions = {
-    method: "GET",
-    url: process.env.JUDGE0_API_URL + "submissions/" + `${submissionId}`,
-    params: {
-      base64_encoded: "true",
-      fields: "*",
-    },
-    headers: {
-      "X-RapidAPI-Key": process.env.RAPID_API_KEY,
-      "X-RapidAPI-Host": process.env.RAPID_API_HOST,
-    },
-  };
-
-  const res = await axios.request(getOptions);
-  return base64.decode(res.data.stdout);
-};
-
 const createSnippet = async (req, res) => {
   try {
-    const { username, language_id, language, stdin, code } = req.body;
-    console.log(req.body);
+    const { username, language_id, language, stdin, code, output } = req.body;
 
     const newSnippet = new Snippet({
       username,
@@ -65,17 +21,10 @@ const createSnippet = async (req, res) => {
       language,
       stdin,
       code,
+      stdout: output,
     });
 
-    const base64Code = base64.encode(code);
-    const base64Stdin = base64.encode(stdin);
-
-    const stdout = await codeRunner(base64Code, base64Stdin, language_id);
-
-    newSnippet.stdout = stdout;
-
     await newSnippet.save();
-
     await updateCache(newSnippet);
 
     res.status(201).send(newSnippet);
