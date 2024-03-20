@@ -50,8 +50,8 @@ const codeRunner = async (base64Code, base64Stdin, language) => {
   };
 
   const res = await axios.request(getOptions);
-
-  return atob(res.data.stdout);
+  const stdout = Buffer.from(res.data.stdout, "base64").toString("utf-8");
+  return stdout;
 };
 
 const createSnippet = async (req, res) => {
@@ -67,12 +67,10 @@ const createSnippet = async (req, res) => {
       code,
     });
 
-    const base64Code = btoa(code);
-    const base64Stdin = btoa(stdin);
+    const base64Code = Buffer.from(code).toString("base64");
+    const base64Stdin = Buffer.from(stdin).toString("base64");
 
     const stdout = await codeRunner(base64Code, base64Stdin, language_id);
-
-    console.log(stdout);
 
     newSnippet.stdout = stdout;
 
