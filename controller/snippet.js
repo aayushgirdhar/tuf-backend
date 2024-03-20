@@ -12,7 +12,7 @@ const updateCache = async (newSnippet) => {
   }
 };
 
-const reqJudge = async (base64Code, base64Stdin, language) => {
+const codeRunner = async (base64Code, base64Stdin, language) => {
   const postOptions = {
     method: "POST",
     url: process.env.JUDGE0_API_URL + "submissions",
@@ -57,6 +57,7 @@ const reqJudge = async (base64Code, base64Stdin, language) => {
 const createSnippet = async (req, res) => {
   try {
     const { username, language_id, language, stdin, code } = req.body;
+    console.log(req.body);
 
     const newSnippet = new Snippet({
       username,
@@ -69,7 +70,9 @@ const createSnippet = async (req, res) => {
     const base64Code = btoa(code);
     const base64Stdin = btoa(stdin);
 
-    const stdout = await reqJudge(base64Code, base64Stdin, language_id);
+    const stdout = await codeRunner(base64Code, base64Stdin, language_id);
+
+    console.log(stdout);
 
     newSnippet.stdout = stdout;
 
@@ -85,15 +88,13 @@ const createSnippet = async (req, res) => {
 
 const getSnippets = async (req, res) => {
   try {
-
     const cachedData = await client.get("snippets");
     if (cachedData) {
       console.log("Cache hit");
       return res.status(200).json(JSON.parse(cachedData));
     }
 
-    const snippets = await Snippet.find()
-      .sort({ createdAt: -1 })
+    const snippets = await Snippet.find().sort({ createdAt: -1 });
     if (snippets.length === 0) {
       res.status(404).json({ message: "No snippets found" });
     }
